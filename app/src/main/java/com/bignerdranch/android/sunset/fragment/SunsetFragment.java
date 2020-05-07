@@ -47,16 +47,11 @@ public class SunsetFragment extends Fragment {
         mSunsetSkyColor = resources.getColor(R.color.sunsetSky);
         mNightSkyColor = resources.getColor(R.color.nightSky);
 
-        mSceneView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startAnimation();
-            }
-        });
+        mSceneView.setOnClickListener(v -> startSunsetAnimation());
         return view;
     }
 
-    private void startAnimation() {
+    private void startSunsetAnimation() {
         float sunYStart = mSunView.getTop();
         float sunYEnd = mSkyView.getBottom();
 
