@@ -18,6 +18,9 @@ import androidx.fragment.app.Fragment;
 
 import com.bignerdranch.android.sunset.R;
 
+/**
+ * Main fragment that holds all main animations
+ */
 public class SunsetFragment extends Fragment {
     private static final String TAG = SunsetFragment.class.getSimpleName();
 
@@ -81,6 +84,8 @@ public class SunsetFragment extends Fragment {
         mDaySeaColor = resources.getColor(R.color.sea);
         mSunsetSeaColor = resources.getColor(R.color.sunsetSea);
 
+        // Listener to activate the main sunset animation.
+        // If animation is in progress - pause/resume on click.
         mSceneView.setOnClickListener(v -> {
             mIsSunSettingNow = !mIsSunSettingNow;
 
@@ -93,6 +98,8 @@ public class SunsetFragment extends Fragment {
             }
         });
 
+        // Listener to get actual metrics for destination coordinates
+        // (without it methods like View.getTop() returns 0).
         mSceneView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             mSunYUp = mSunView.getTop();
             mSunYDown = mSkyView.getBottom();
@@ -107,22 +114,36 @@ public class SunsetFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Check if sun is completely set (is all the way down).
+     *
+     * @return true, when sun is completely set
+     */
     private boolean isSunSet() {
         return mSunView.getY() == mSkyView.getBottom();
     }
 
+    /**
+     * Activates all sets of sun rays to start animating.
+     */
     private void startSunRays() {
         mSunGlowSmallView.setAlpha(0.1F);
         startSunRays(mSunGlowMiddleView, mSunGlowMiddleAnimator);
         startSunRays(mSunGlowLargeView, mSunGlowLargeAnimator);
     }
 
+    /**
+     * Deactivates all sets of sun rays and stops their animation.
+     */
     private void stopSunRays() {
         mSunGlowSmallView.setAlpha(0F);
         mSunGlowMiddleAnimator.end();
         mSunGlowLargeAnimator.end();
     }
 
+    /**
+     * Start up the slight pulse of the sun and its reflection on the sea surface
+     */
     private void startSunPulse() {
         ObjectAnimator sunPulseAnimator = ObjectAnimator
                 .ofFloat(mSunView, "alpha", 0.95F, 1, 0.95F)
@@ -140,6 +161,12 @@ public class SunsetFragment extends Fragment {
         sunReflectPulseAnimator.start();
     }
 
+    /**
+     * Start sun rays animation for individual "sun ray" object.
+     *
+     * @param view        view of sun ray (circle-shaped image view)
+     * @param animatorSet individual animator set to control animation from outside the method
+     */
     private void startSunRays(View view, AnimatorSet animatorSet) {
         int duration = 4000;
 
@@ -165,8 +192,13 @@ public class SunsetFragment extends Fragment {
         animatorSet.start();
     }
 
+    /**
+     * Main animation method to activate sunset animation.
+     * Also used for reverse animation (sun rise).
+     */
     private void startSunsetAnimation() {
 
+        // Sun going up and down
         ObjectAnimator sunHeightAnimator = ObjectAnimator
                 .ofFloat(mSunView, "y",
                         mSunView.getY(),
@@ -174,6 +206,7 @@ public class SunsetFragment extends Fragment {
                 .setDuration(GLOBAL_DURATION);
         sunHeightAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
 
+        // Sun's reflection going up and down
         ObjectAnimator sunReflectHeightAnimator = ObjectAnimator
                 .ofFloat(mSunReflectionView, "y",
                         mSunReflectionView.getY(),
@@ -181,12 +214,14 @@ public class SunsetFragment extends Fragment {
                 .setDuration(GLOBAL_DURATION);
         sunReflectHeightAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
 
+        // Sun's reflection scaling near the sea's edge
         ObjectAnimator sunReflectScaleAnimator = ObjectAnimator
                 .ofFloat(mSunReflectionView, "scaleY",
                         mSunReflectionView.getScaleY(),
                         mIsSunSettingNow ? 1 : 0.8F)
                 .setDuration(GLOBAL_DURATION);
 
+        // Sky changing from Light Blue to Orange
         ObjectAnimator sunsetSunriseSkyAnimator = ObjectAnimator
                 .ofInt(mSkyView, "backgroundColor",
                         mIsSunSettingNow ? mBlueSkyColor : mSunsetSkyColor,
@@ -194,6 +229,7 @@ public class SunsetFragment extends Fragment {
                 .setDuration(GLOBAL_DURATION);
         sunsetSunriseSkyAnimator.setEvaluator(new ArgbEvaluator());
 
+        // Sky changing from Orange to Dark Blue
         ObjectAnimator sunsetNightSkyAnimator = ObjectAnimator
                 .ofInt(mSkyView, "backgroundColor",
                         mIsSunSettingNow ? mSunsetSkyColor : mNightSkyColor,
@@ -201,12 +237,14 @@ public class SunsetFragment extends Fragment {
                 .setDuration(GLOBAL_DURATION / 2);
         sunsetNightSkyAnimator.setEvaluator(new ArgbEvaluator());
 
+        // Sea getting brighter when sun goes down, and getting back darker when sun hides
         ObjectAnimator beforeSunsetSeaAnimator = ObjectAnimator
                 .ofInt(mSeaView, "backgroundColor",
                         mDaySeaColor, mSunsetSeaColor, mDaySeaColor)
                 .setDuration(GLOBAL_DURATION);
         beforeSunsetSeaAnimator.setEvaluator(new ArgbEvaluator());
 
+        // Sea changing color to dark blue (night) and back (day)
         ObjectAnimator sunsetNightSeaAnimator = ObjectAnimator
                 .ofInt(mSeaView, "backgroundColor",
                         mIsSunSettingNow ? mDaySeaColor : mNightSeaColor,
@@ -237,12 +275,15 @@ public class SunsetFragment extends Fragment {
         mAnimatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
+                // impossible to synchronise sun with its rays during the movement animation
+                // so we need to stop rays animation
                 stopSunRays();
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (!isSunSet()) {
+                    // every time the sun gets to its top position - it starts shining with rays
                     startSunRays();
                 }
             }
