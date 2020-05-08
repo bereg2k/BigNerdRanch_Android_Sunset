@@ -13,17 +13,57 @@
 
         <ImageView
             android:id="@+id/sun"
+            android:alpha="0.95"
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_gravity="center"
             android:contentDescription="@string/sun"
             android:src="@drawable/sun" />
+
+        <ImageView
+            android:id="@+id/sun_glow_small"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:alpha="0"
+            android:contentDescription="@string/sun"
+            android:src="@drawable/sun_glow_small" />
+
+        <ImageView
+            android:id="@+id/sun_glow_middle"
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:layout_gravity="center"
+            android:alpha="0"
+            android:contentDescription="@string/sun"
+            android:src="@drawable/sun_glow_middle" />
+
+        <ImageView
+            android:id="@+id/sun_glow_large"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_gravity="center"
+            android:alpha="0"
+            android:contentDescription="@string/sun"
+            android:src="@drawable/sun_glow_large" />
+
     </FrameLayout>
 
-    <View
+    <FrameLayout
         android:id="@+id/sea"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.39"
-        android:background="@color/sea" />
+        android:background="@color/sea">
+
+        <ImageView
+            android:id="@+id/sun_reflection"
+            android:alpha="0.4"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:scaleY="0.8"
+            android:contentDescription="@string/sun"
+            android:src="@drawable/sun" />
+    </FrameLayout>
 </LinearLayout>
