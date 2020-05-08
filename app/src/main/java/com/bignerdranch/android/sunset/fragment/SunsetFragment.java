@@ -21,6 +21,8 @@ import com.bignerdranch.android.sunset.R;
 public class SunsetFragment extends Fragment {
     private static final String TAG = SunsetFragment.class.getSimpleName();
 
+    private static final long GLOBAL_DURATION = 3000L;
+
     private View mSceneView;
     private View mSunView;
     private View mSkyView;
@@ -37,6 +39,8 @@ public class SunsetFragment extends Fragment {
     private int mDaySeaColor;
     private int mNightSeaColor;
     private int mSunsetSeaColor;
+
+    private boolean mIsSunSettingNow = false;
 
     private float mSunYUp;
     private float mSunYDown;
@@ -78,6 +82,8 @@ public class SunsetFragment extends Fragment {
         mSunsetSeaColor = resources.getColor(R.color.sunsetSea);
 
         mSceneView.setOnClickListener(v -> {
+            mIsSunSettingNow = !mIsSunSettingNow;
+
             if (mAnimatorSet.isPaused()) {
                 mAnimatorSet.resume();
             } else if (mAnimatorSet.isRunning()) {
@@ -96,7 +102,7 @@ public class SunsetFragment extends Fragment {
         });
 
         startSunPulse();
-        startSunGlow();
+        startSunRays();
 
         return view;
     }
@@ -105,13 +111,13 @@ public class SunsetFragment extends Fragment {
         return mSunView.getY() == mSkyView.getBottom();
     }
 
-    private void startSunGlow() {
+    private void startSunRays() {
         mSunGlowSmallView.setAlpha(0.1F);
         startSunRays(mSunGlowMiddleView, mSunGlowMiddleAnimator);
         startSunRays(mSunGlowLargeView, mSunGlowLargeAnimator);
     }
 
-    private void stopSunGlow() {
+    private void stopSunRays() {
         mSunGlowSmallView.setAlpha(0F);
         mSunGlowMiddleAnimator.end();
         mSunGlowLargeAnimator.end();
@@ -160,58 +166,57 @@ public class SunsetFragment extends Fragment {
     }
 
     private void startSunsetAnimation() {
-        int duration = 3000;
 
         ObjectAnimator sunHeightAnimator = ObjectAnimator
                 .ofFloat(mSunView, "y",
-                        isSunSet() ? mSunYDown : mSunYUp,
-                        isSunSet() ? mSunYUp : mSunYDown)
-                .setDuration(duration);
+                        mSunView.getY(),
+                        mIsSunSettingNow ? mSunYDown : mSunYUp)
+                .setDuration(GLOBAL_DURATION);
         sunHeightAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
 
         ObjectAnimator sunReflectHeightAnimator = ObjectAnimator
                 .ofFloat(mSunReflectionView, "y",
-                        isSunSet() ? mSunReflectYDown : mSunReflectYUp,
-                        isSunSet() ? mSunReflectYUp : mSunReflectYDown)
-                .setDuration(duration);
+                        mSunReflectionView.getY(),
+                        mIsSunSettingNow ? mSunReflectYDown : mSunReflectYUp)
+                .setDuration(GLOBAL_DURATION);
         sunReflectHeightAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
 
         ObjectAnimator sunReflectScaleAnimator = ObjectAnimator
                 .ofFloat(mSunReflectionView, "scaleY",
-                        isSunSet() ? 1 : 0.8F,
-                        isSunSet() ? 0.8F : 1)
-                .setDuration(duration);
+                        mSunReflectionView.getScaleY(),
+                        mIsSunSettingNow ? 1 : 0.8F)
+                .setDuration(GLOBAL_DURATION);
 
         ObjectAnimator sunsetSunriseSkyAnimator = ObjectAnimator
                 .ofInt(mSkyView, "backgroundColor",
-                        isSunSet() ? mSunsetSkyColor : mBlueSkyColor,
-                        isSunSet() ? mBlueSkyColor : mSunsetSkyColor)
-                .setDuration(duration);
+                        mIsSunSettingNow ? mBlueSkyColor : mSunsetSkyColor,
+                        mIsSunSettingNow ? mSunsetSkyColor : mBlueSkyColor)
+                .setDuration(GLOBAL_DURATION);
         sunsetSunriseSkyAnimator.setEvaluator(new ArgbEvaluator());
 
         ObjectAnimator sunsetNightSkyAnimator = ObjectAnimator
                 .ofInt(mSkyView, "backgroundColor",
-                        isSunSet() ? mNightSkyColor : mSunsetSkyColor,
-                        isSunSet() ? mSunsetSkyColor : mNightSkyColor)
-                .setDuration(duration / 2);
+                        mIsSunSettingNow ? mSunsetSkyColor : mNightSkyColor,
+                        mIsSunSettingNow ? mNightSkyColor : mSunsetSkyColor)
+                .setDuration(GLOBAL_DURATION / 2);
         sunsetNightSkyAnimator.setEvaluator(new ArgbEvaluator());
 
         ObjectAnimator beforeSunsetSeaAnimator = ObjectAnimator
                 .ofInt(mSeaView, "backgroundColor",
                         mDaySeaColor, mSunsetSeaColor, mDaySeaColor)
-                .setDuration(duration);
+                .setDuration(GLOBAL_DURATION);
         beforeSunsetSeaAnimator.setEvaluator(new ArgbEvaluator());
 
         ObjectAnimator sunsetNightSeaAnimator = ObjectAnimator
                 .ofInt(mSeaView, "backgroundColor",
-                        isSunSet() ? mNightSeaColor : mDaySeaColor,
-                        isSunSet() ? mDaySeaColor : mNightSeaColor)
-                .setDuration(duration / 2);
+                        mIsSunSettingNow ? mDaySeaColor : mNightSeaColor,
+                        mIsSunSettingNow ? mNightSeaColor : mDaySeaColor)
+                .setDuration(GLOBAL_DURATION / 2);
         sunsetNightSeaAnimator.setEvaluator(new ArgbEvaluator());
 
         mAnimatorSet = new AnimatorSet();
 
-        if (isSunSet()) {
+        if (!mIsSunSettingNow) {
             mAnimatorSet.play(sunsetNightSkyAnimator)
                     .with(sunsetNightSeaAnimator)
                     .before(sunsetSunriseSkyAnimator)
@@ -232,13 +237,13 @@ public class SunsetFragment extends Fragment {
         mAnimatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
-                stopSunGlow();
+                stopSunRays();
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
                 if (!isSunSet()) {
-                    startSunGlow();
+                    startSunRays();
                 }
             }
 
